@@ -1,21 +1,21 @@
-import { useState, useEffect } from 'react'
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import { Sidebar } from './components/layout/sidebar'
-import { SystemStatus } from './components/layout/system-status'
-import { DragDropScheduling } from './components/scheduling/drag-drop-scheduling'
-import { LoginForm } from './components/auth/login-form'
-import { AnalyticsDashboard } from './components/analytics/analytics-dashboard'
-import { PersonnelDetail } from './components/personnel/personnel-detail'
-import { PersonnelList } from './components/personnel/personnel-list'
-import { OrganizationChart } from './components/personnel/organization-chart'
-import { ProjectDetail } from './components/projects/project-detail'
-import { ProjectList } from './components/projects/project-list'
-import { SystemSettings } from './components/settings/system-settings'
-import { authenticateUser, type User, getUserById, type Project } from './lib/mock-data'
-import { authAPI, usersAPI, projectsAPI, tasksAPI, departmentsAPI, schedulingAPI } from './lib/api'
-import './styles/globals.css'
+"use client"
 
-function App() {
+import { useState, useEffect } from "react"
+import { LoginForm } from "@/components/auth/login-form"
+import { Sidebar } from "@/components/layout/sidebar"
+import { PersonnelList } from "@/components/personnel/personnel-list"
+import { PersonnelDetail } from "@/components/personnel/personnel-detail"
+import { OrganizationChart } from "@/components/personnel/organization-chart"
+import { ProjectList } from "@/components/projects/project-list"
+import { ProjectDetail } from "@/components/projects/project-detail"
+import { DragDropScheduling } from "@/components/scheduling/drag-drop-scheduling"
+import { AnalyticsDashboard } from "@/components/analytics/analytics-dashboard"
+import { SystemSettings } from "@/components/settings/system-settings"
+import { SystemStatus } from "@/components/layout/system-status"
+import type { User, Project } from "@/lib/mock-data"
+import { getUserById } from "@/lib/mock-data"
+
+export default function HomePage() {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [currentPage, setCurrentPage] = useState("dashboard")
@@ -24,51 +24,22 @@ function App() {
   const [viewMode, setViewMode] = useState<"list" | "detail" | "org">("list")
 
   useEffect(() => {
-    const checkSession = async () => {
-      const token = localStorage.getItem('access_token')
-      if (token) {
-        try {
-          const currentUser = await authAPI.getCurrentUser()
-          setUser(currentUser)
-        } catch (error) {
-          console.error('Session check failed:', error)
-          localStorage.removeItem('access_token')
-        }
-      }
-      setIsLoading(false)
+    // Check for existing session
+    const savedUser = localStorage.getItem("currentUser")
+    if (savedUser) {
+      setUser(JSON.parse(savedUser))
     }
-
-    checkSession()
+    setIsLoading(false)
   }, [])
 
-  const handleLogin = async (username: string, password: string) => {
-    try {
-      const response = await authAPI.login(username, password)
-      localStorage.setItem('access_token', response.access_token)
-      
-      // 获取用户信息
-      const currentUser = await authAPI.getCurrentUser()
-      setUser(currentUser)
-      
-      return { success: true }
-    } catch (error: any) {
-      console.error('Login failed:', error)
-      return { 
-        success: false, 
-        error: error.response?.data?.detail || '登录失败，请检查用户名和密码' 
-      }
-    }
+  const handleLogin = (user: User) => {
+    setUser(user)
+    localStorage.setItem("currentUser", JSON.stringify(user))
   }
 
-  const handleLogout = async () => {
-    try {
-      await authAPI.logout()
-    } catch (error) {
-      console.error('Logout error:', error)
-    } finally {
-      setUser(null)
-      localStorage.removeItem('access_token')
-    }
+  const handleLogout = () => {
+    setUser(null)
+    localStorage.removeItem("currentUser")
   }
 
   const handlePageChange = (page: string) => {
@@ -211,5 +182,3 @@ function App() {
     </div>
   )
 }
-
-export default App
